@@ -1,0 +1,1 @@
+from dataset.shape_dataset.utils.extract_mesh import extract_mesh_from_neural_field

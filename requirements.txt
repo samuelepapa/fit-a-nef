@@ -1,0 +1,10 @@
+torch==2.0.0
+torchvision==0.15.1
+torchaudio==2.0.1
+torchdata==0.6.0
+flax
+matplotlib
+ml_collections
+h5py
+optuna
+trimesh

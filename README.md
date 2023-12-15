@@ -1,4 +1,4 @@
-# 🖼️ **NeuralDataset** - Neural fields dataset builder
+# 🚀 `fit-a-nef`
 
 *Quickly fit neural fields to an entire dataset.*
 

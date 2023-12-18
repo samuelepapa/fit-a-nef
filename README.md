@@ -10,9 +10,9 @@ Creators: [Samuele Papa](https://samuelepapa.github.io), [Riccardo Valperga](htt
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 ![Schema](assets/fig-1.png)
 
-Using the ability of JAX to easily parallelize the operations on a GPU with `vmap`, a sizeable set of neural fields can be fit to distinct samples.
+Using the ability of JAX to easily parallelize the operations on a GPU with `vmap`, a sizeable set of neural fields can be fit to distinct samples at the same time.
 
-The `fit-a-nef` library is designed to easily allow the user to add their own *training task*, *dataset*, and *model*. It provides a uniform format to store and load large amounts of neural fields in a platform-agnostic way. Whether you use PyTorch, Jax or any other framework, the neural fields can be loaded and used in your project.
+The `fit-a-nef` library is designed to easily allow the user to add their own *training task*, *dataset*, and *model*. It provides a uniform format to store and load large amounts of neural fields in a platform-agnostic way. Whether you use PyTorch, JAX or any other framework, the neural fields can be loaded and used in your project.
 
 This repository also provides a simple interface that uses [optuna](https://optuna.org/) to find the best parameters for any neural field while tracking all relevant metrics using [wandb](https://wandb.ai/).
 
@@ -44,7 +44,7 @@ This repository also provides a simple interface that uses [optuna](https://optu
 
 ## Getting started
 
-### The library
+### Installation
 
 To use the `fit-a-nef` library, simply clone the repository and run:
 
@@ -52,15 +52,17 @@ To use the `fit-a-nef` library, simply clone the repository and run:
 python setup.py install
 ```
 
-This will install the `fit-a-nef` library and all its dependencies. Problems might arise with using jax. In that case, simply install jax manually first, and then run the command above.
-
-### The repository
-
-The repository contains also examples of how to use the library to fit neural fields to images and shapes. For this, more dependencies are required, as the datasets are not included in the library, and some plotting functions are used to visualize the results.
+This will install the `fit-a-nef` library and all its dependencies. To ensure that JAX is installed with the right CUDA/cuDNN version of your platform, we recommend installing JAX first (see instructions [here](https://jax.readthedocs.io/en/latest/installation.html)), and then run the command above.
 
 Follow the instructions from INSTALL.md for all the details.
 
-*Note that both `optuna` and `wandb` are optional dependencies, which are required only when running the `tune.py` script. Additionally, the dependencies required for the datasets are not necessary if you are not going to use them.*
+#### Optional dependencies
+
+Depending on the use case you are aiming for with fit-a-nef, additional optional dependencies may be beneficial to install. For example, for tuning hyperparameters of the neural field fitting, we recommend installing `optuna` for automatic hyperparameter selection and `wandb` for better logging. Further, if you want to use a specific dataset (e.g. ShapeNet or CIFAR10) for fitting or tuning, which is set up in this repository, ensure that all dependencies for these datasets are met. You can check the needed dependencies by **(TODO: ADD DESCRIPTION/LINK HOW TO CHECK)**.
+
+### The repository
+
+Besides **(TODO: ADD WHAT YOU WANT TO CONVINCE AS THE MAIN POINT IN THE LIBRARY)**, the repository contains examples of how to use the library to fit neural fields to images and shapes. For some of these, more dependencies are required, which can be found under _Optional dependencies_ above.
 
 ## Repository structure
 
@@ -144,4 +146,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Acknowledgements and Contributions
 
-We thank Miltiadis Kofina, and David Romero for the feedback during development.
+We thank Miltiadis Kofinas, and David Romero for the feedback during development.

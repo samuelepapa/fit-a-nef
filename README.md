@@ -8,6 +8,7 @@ Creators: [Samuele Papa](https://samuelepapa.github.io), [Riccardo Valperga](htt
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
 [![Style](https://img.shields.io/badge/code%20style-black-000000)](https://github.com/psf/black)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![Read the docs](https://img.shields.io/badge/docs-latest-blue)](https://fit-a-nef.readthedocs.io/en/latest/)
 ![Schema](assets/fig-1.png)
 
 Using the ability of JAX to easily parallelize the operations on a GPU with `vmap`, a sizeable set of neural fields can be fit to distinct samples at the same time.
@@ -49,20 +50,22 @@ This repository also provides a simple interface that uses [optuna](https://optu
 To use the `fit-a-nef` library, simply clone the repository and run:
 
 ```bash
-python setup.py install
+pip install .
 ```
 
-This will install the `fit-a-nef` library and all its dependencies. To ensure that JAX is installed with the right CUDA/cuDNN version of your platform, we recommend installing JAX first (see instructions [here](https://jax.readthedocs.io/en/latest/installation.html)), and then run the command above.
-
-Follow the instructions from INSTALL.md for all the details.
+This will install the `fit-a-nef` library and all its dependencies. To ensure that JAX and PyTorch are installed with the right CUDA/cuDNN version of your platform, we recommend installing them first (see instructions on the official [Jax](https://jax.readthedocs.io/en/latest/installation.html) and [Pytorch](https://pytorch.org/get-started/locally/)), and then run the command above.
 
 #### Optional dependencies
 
-Depending on the use case you are aiming for with fit-a-nef, additional optional dependencies may be beneficial to install. For example, for tuning hyperparameters of the neural field fitting, we recommend installing `optuna` for automatic hyperparameter selection and `wandb` for better logging. Further, if you want to use a specific dataset (e.g. ShapeNet or CIFAR10) for fitting or tuning, which is set up in this repository, ensure that all dependencies for these datasets are met. You can check the needed dependencies by **(TODO: ADD DESCRIPTION/LINK HOW TO CHECK)**.
+Depending on the use case you are aiming for with fit-a-nef, additional optional dependencies may be beneficial to install. For example, for tuning hyperparameters of the neural field fitting, we recommend installing `optuna` for automatic hyperparameter selection and `wandb` for better logging. Further, if you want to use a specific dataset (e.g. ShapeNet or CIFAR10) for fitting or tuning, which is set up in this repository, ensure that all dependencies for these datasets are met. You can check the needed dependencies by running the simple tuning image and shape tasks (more info on how to do that below).
 
 ### The repository
 
-Besides **(TODO: ADD WHAT YOU WANT TO CONVINCE AS THE MAIN POINT IN THE LIBRARY)**, the repository contains examples of how to use the library to fit neural fields to images and shapes. For some of these, more dependencies are required, which can be found under _Optional dependencies_ above.
+The library provides trainers that allow fitting images and shapes. Additionally, it allows reliable storing of large-scale neural datasets and has code for several neural field architectures.
+
+However, to improve flexibility, the library does not ship with specific datasets or a defined config management system. This repository is meant to provide an example and template on how to correctly use the library, and allow for easy extension of the library to new datasets and tasks.
+
+For some of these, more dependencies are required, which can be found under _Optional dependencies_ above and on the [INSTALL.md](INSTALL.md) file.
 
 ## Repository structure
 

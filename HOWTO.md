@@ -106,6 +106,24 @@ These two commands will fit 140k nefs on each GPU, allowing for a direct 2x spee
 
 We use `wandb` for logging. Simply log into you account and use the `--task.wandb.(...)` config options to specify the project and entity.
 
+To change the log frequency (both with and without `wandb`), use the `--task.log.(...)` config options. For the image task, the options are the following:
+
+```bash
+--task.log.images=500
+--task.log.metrics=10
+--task.log.loss=10
+--task.log.use_wandb=False
+```
+
+For the shape task, the options are the following:
+
+```bash
+--task.log.meshes=2500
+--task.log.metrics=1000
+--task.log.loss=250
+--task.log.use_wandb=False
+```
+
 ## Hyperparameter tuning
 
 TODO

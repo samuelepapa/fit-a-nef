@@ -105,10 +105,10 @@ Each task has its own `fit.py` file which is called to fit the neural fields to 
 Let us look at a simple example. From the root folder we can run:
 
 ```bash
-python tasks/image/fit.py --nef=config/nef.py:SIREN --task.train.end_idx=10000 --task.train.num_parallel_nefs=2000 --task.dataset.name="MNIST" --task.dataset.out_channels=1"
+python tasks/image/fit.py --nef=config/nef.py:SIREN --task.train.end_idx=10000 --task.train.num_parallel_nefs=2000"
 ```
 
-This will fit 10k SIRENs each to a different sample from MNIST. This will be done with 2k NeFs in parallel.
+This will fit 10k SIRENs each to a different sample from CIFAR10 (the default dataset). This will be done with 2k NeFs in parallel.
 
 For more details, refer to the [how-to](HOWTO.md) guide.
 

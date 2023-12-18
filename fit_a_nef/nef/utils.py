@@ -1,3 +1,4 @@
+import json
 import math
 from pathlib import Path
 from typing import Any, Dict, Sequence, Union
@@ -7,7 +8,6 @@ import jax.numpy as jnp
 from jax import core, dtypes, random
 from jax.nn.initializers import Initializer
 from jax.random import KeyArray
-from ml_collections import ConfigDict
 
 
 def load_model_cfg(storage_folder: Path):
@@ -16,7 +16,8 @@ def load_model_cfg(storage_folder: Path):
     The neural field depends on the information that comes from nef_cfg
     """
     nef_cfg_path = storage_folder / Path("nef_cfg.json")
-    nef_cfg = ConfigDict.from_json(nef_cfg_path.read_text())
+    # load json to dict
+    nef_cfg = json.load(open(nef_cfg_path))
 
     return nef_cfg
 

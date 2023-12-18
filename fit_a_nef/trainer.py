@@ -16,11 +16,11 @@ from absl import logging
 # JAX
 from flax.training import train_state
 
-from fit_a_nef.initializers import InitModel, MetaLearnedInit, RandomInit, SharedInit
-from fit_a_nef.nef import param_key_dict
+from .initializers import InitModel, MetaLearnedInit, RandomInit, SharedInit
+from .nef import param_key_dict
 
 # Misc
-from fit_a_nef.utils import (
+from .utils import (
     TrainState,
     flatten_params,
     get_nef,
@@ -31,6 +31,30 @@ from fit_a_nef.utils import (
 
 
 class SignalTrainer:
+    """Base class for training neural networks.
+
+    :param coords: the coordinates to train on
+    :type coords: jnp.ndarray
+    :param signals: the signal values to train on, i.e. images (pixel values) objects (occupancy)
+    :type signals: jnp.ndarray
+    :param nef_cfg: the config for the neural network
+    :type nef_cfg: Dict[str, Any]
+    :param scheduler_cfg: the config for the scheduler
+    :type scheduler_cfg: Dict[str, Any]
+    :param optimizer_cfg: the config for the optimizer
+    :type optimizer_cfg: Dict[str, Any]
+    :param initializer: the initializer for the model, see initializers.py for more info
+    :type initializer: InitModel
+    :param train_rng: the random number generator to use for training
+    :type train_rng: jnp.ndarray
+    :param num_signals: the number of signals being fit
+    :type num_signals: int
+    :param num_steps: the number of steps to train for, defaults to 20000
+    :type num_steps: int, optional
+    :param verbose: whether to have verbose training or not, defaults to False. Overwrite the :func:`verbose_train_model` function to change the logging behavior.
+    :type verbose: bool, optional
+    """
+
     def __init__(
         self,
         coords: jnp.ndarray,
@@ -44,23 +68,7 @@ class SignalTrainer:
         num_steps: int = 20000,
         verbose: bool = False,
     ):
-        """
-        Base class for training neural networks.
-        Args:
-            signals (jnp.ndarray): The signal values to train on, i.e. images (pixel values) objects (occupancy).
-            coords (jnp.ndarray): The coordinates to train on.
-            nef_cfg (Dict[str, Any]): The config for the neural network.
-            scheduler_cfg (Dict[str, Any]): The config for the scheduler.
-            out_channels (int, optional): The number of output channels. Defaults to 1.
-            seed (int, optional): The seed to use. Defaults to 42.
-            num_steps (int, optional): The number of steps to train for. Defaults to 20000.
-
-        Raises:
-            NotImplementedError: If the model is not implemented.
-
-        Returns:
-            None
-        """
+        """Constructor."""
         super().__init__()
 
         self.coords = coords
@@ -112,6 +120,12 @@ class SignalTrainer:
         self,
         example_input: jnp.ndarray,
     ):
+        """Initializes the model parameters using the initializer defined in the constructor.
+
+        :param example_input: An example input to the model. Used by Jax to initialize the model
+            correctly.
+        :type example_input: jnp.ndarray
+        """
         # Initialize model parameters
         params = self.initializer(self.model, example_input, self.num_signals)
 

@@ -7,13 +7,13 @@ import jax
 from absl import app, logging
 from ml_collections import config_flags
 
-from config import load_cfgs
+from config import load_cfgs, store_cfg
 from dataset import path_from_name_idxs
 from dataset.data_creation import get_dataset
 from dataset.image_dataset import load_attributes, load_images
 from dataset.image_dataset.utils import MEAN_STD_IMAGE_DATASETS
 from fit_a_nef import MetaLearnedInit, RandomInit, SharedInit, SignalImageTrainer
-from fit_a_nef.utils import get_meta_init, store_cfg
+from fit_a_nef.utils import get_meta_init
 from tasks.utils import find_seed_idx, get_num_nefs_list, get_signal_idx
 
 try:

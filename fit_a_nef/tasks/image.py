@@ -6,9 +6,9 @@ import jax.numpy as jnp
 import optax
 from absl import logging
 
-from fit_a_nef.initializers import InitModel
-from fit_a_nef.metrics import mae, mse, psnr, simse, ssim
-from fit_a_nef.trainer import SignalTrainer
+from ..initializers import InitModel
+from ..metrics import mae, mse, psnr, simse, ssim
+from ..trainer import SignalTrainer
 
 try:
     import wandb
@@ -175,7 +175,7 @@ class SignalImageTrainer(SignalTrainer):
             check_every (int): How often to check the psnr.
             mean (float): The mean of the dataset. Used in the psnr calculation.
             std (float): The std of the dataset. Used in the psnr calculation.
-        
+
         Returns:
             num_steps (int): The number of steps it took to reach the target psnr.
         """
@@ -195,8 +195,8 @@ class SignalImageTrainer(SignalTrainer):
         return num_steps
 
     def psnr(self):
-        """
-        Calculate the Peak Signal-to-Noise Ratio (PSNR) between the reconstructed images and the original images.
+        """Calculate the Peak Signal-to-Noise Ratio (PSNR) between the reconstructed images and the
+        original images.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean PSNR and the mean squared PSNR.
@@ -206,8 +206,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def mae(self):
-        """
-        Calculate the mean absolute error (MAE) between the reconstructed signals and the original signals.
+        """Calculate the mean absolute error (MAE) between the reconstructed signals and the
+        original signals.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean of the MAE metric and the mean squared MAE metric.
@@ -217,8 +217,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def mse(self):
-        """
-        Calculates the mean squared error (MSE) between the reconstructed signals and the original signals.
+        """Calculates the mean squared error (MSE) between the reconstructed signals and the
+        original signals.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean MSE and the mean squared MSE.
@@ -228,8 +228,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def ssim(self):
-        """
-        Calculates the Structural Similarity Index (SSIM) between the reconstructed images and the original signals.
+        """Calculates the Structural Similarity Index (SSIM) between the reconstructed images and
+        the original signals.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean SSIM and the mean squared SSIM.
@@ -242,8 +242,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def simse(self):
-        """
-        Calculate the Structural Similarity Index (SIMSE) between the reconstructed image and the original signal.
+        """Calculate the Structural Similarity Index (SIMSE) between the reconstructed image and
+        the original signal.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean SIMSE and the mean squared SIMSE.
@@ -253,13 +253,12 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def validation_psnr(self):
-        """
-        Calculate the Peak Signal-to-Noise Ratio (PSNR) for the validation images.
+        """Calculate the Peak Signal-to-Noise Ratio (PSNR) for the validation images.
 
         Returns:
             Tuple[float, float]: The mean PSNR and the mean squared PSNR.
         """
-        
+
         # TODO move this in the init, no need to calculate every time.
         x = jnp.linspace(0.5, self.images_shape[0] - 0.5, self.images_shape[0] - 1)
         y = jnp.linspace(0.5, self.images_shape[1] - 0.5, self.images_shape[1] - 1)

@@ -8,9 +8,9 @@ import numpy as np
 import optax
 from absl import logging
 
-from fit_a_nef.initializers import InitModel
-from fit_a_nef.metrics import iou
-from fit_a_nef.trainer import SignalTrainer
+from ..initializers import InitModel
+from ..metrics import iou
+from ..trainer import SignalTrainer
 
 try:
     import wandb

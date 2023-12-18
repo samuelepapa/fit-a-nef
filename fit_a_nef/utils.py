@@ -10,7 +10,6 @@ import numpy as np
 import optax
 from flax.core.frozen_dict import FrozenDict
 from flax.training import train_state
-from ml_collections import ConfigDict
 
 from fit_a_nef import nef
 
@@ -186,37 +185,6 @@ def unflatten_params(
     key_dict = unflatten_dict(key_dict)
 
     return FrozenDict(jax.tree_util.tree_unflatten(jax.tree_util.tree_structure(key_dict), params))
-
-
-def store_cfg(
-    cfg: ConfigDict, storage_folder: Path, cfg_name: str = "cfg.json", overwrite: bool = False
-):
-    """Store the essential information to be able to load the neural field.
-
-    The neural field depends on the information that comes from nef_cfg
-    """
-    # ml_collections ConfigDict to JSON
-    cfg_s = cfg.to_json()
-    # nef_cfg_s = json.dumps(nef_cfg)
-    cfg_path = storage_folder / Path(cfg_name)
-    # Check if the file exists. If cfgs don't match, raise an error
-    if cfg_path.exists():
-        if not overwrite:
-            old_cfg = cfg_path.read_text()
-            if cfg_s != old_cfg:
-                raise RuntimeError(
-                    f"You are saving to the same folder as an older, different run."
-                    f"If you know what you are doing, delete {cfg_path} before proceeding."
-                    f"The configuration currently in {cfg_path}:\n"
-                    f"{old_cfg}\n"
-                    f"The configuration you are trying to save:\n"
-                    f"{cfg_s}"
-                )
-            else:
-                return
-    else:
-        # store the json file
-        cfg_path.write_text(cfg_s)
 
 
 # TODO properly implement this.

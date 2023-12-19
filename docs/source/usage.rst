@@ -12,6 +12,3 @@ run the following command in a terminal:
 .. code-block:: console
 
    (.venv) $ pip install .
-
-Usage
------

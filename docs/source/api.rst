@@ -3,7 +3,7 @@ API
 
 .. autosummary::
    :toctree: generated
+   :template: custom-module-template.rst
+   :recursive:
 
    fit_a_nef
-   fit_a_nef.SignalTrainer
-   fit_a_nef.SignalImageTrainer

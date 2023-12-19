@@ -35,3 +35,10 @@ class ShapeTrainer(SignalShapeTrainer):
             verbose=verbose,
             num_points=num_points,
         )
+
+    def verbose_train_model(self):
+        # also plot the 3D shapes
+        return super().verbose_train_model()
+
+    def marching_cubes(self):
+        pass

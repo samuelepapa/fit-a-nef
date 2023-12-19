@@ -19,6 +19,38 @@ except ImportError:
 
 
 class SignalImageTrainer(SignalTrainer):
+    """Fit a set of neural fields to a set of images, given a certain initialization method.
+
+    :param signals: The images to fit to.
+    :type signals: jnp.ndarray
+    :param coords: The coordinates of the images.
+    :type coords: jnp.ndarray
+    :param train_rng: The random number generator to use.
+    :type train_rng: jnp.ndarray
+    :param nef_cfg: The config for the neural fields.
+    :type nef_cfg: Dict[str, Any]
+    :param scheduler_cfg: The config for the scheduler.
+    :type scheduler_cfg: Dict[str, Any]
+    :param optimizer_cfg: The config for the optimizer.
+    :type optimizer_cfg: Dict[str, Any]
+    :param initializer: The initializer to use.
+    :type initializer: InitModel
+    :param log_cfg: The config for the logger. Defaults to None.
+    :type log_cfg: Optional[Dict[str, Any]], optional
+    :param num_steps: The number of steps to train for. Defaults to 500.
+    :type num_steps: int, optional
+    :param verbose: Whether to log the training. Defaults to False.
+    :type verbose: bool, optional
+    :param masked_portion: The portion of the image to mask. Defaults to 0.5.
+    :type masked_portion: float, optional
+    :param images_shape: The shape of the images. Defaults to None.
+    :type images_shape: Optional[Tuple[int, int, int]], optional
+    :param images_mean: The mean of the images. Defaults to None.
+    :type images_mean: Optional[jnp.ndarray], optional
+    :param images_std: The std of the images. Defaults to None.
+    :type images_std: Optional[jnp.ndarray], optional
+    """
+
     def __init__(
         self,
         signals: jnp.ndarray,
@@ -36,23 +68,8 @@ class SignalImageTrainer(SignalTrainer):
         images_mean: Optional[jnp.ndarray] = None,
         images_std: Optional[jnp.ndarray] = None,
     ):
-        """
-        Args:
-            images (jnp.ndarray): The images to train on.
-            coords (jnp.ndarray): The coordinates to train on.
-            nef_cfg (Dict[str, Any]): The config for the neural network.
-            scheduler_cfg (Dict[str, Any]): The config for the scheduler.
-            out_channels (int, optional): The number of output channels. Defaults to 1.
-            seed (int, optional): The seed to use. Defaults to 42.
-            num_images (int, optional): The number of images to train on. Defaults to 5.
-            num_steps (int, optional): The number of steps to train for. Defaults to 20000.
+        """Constructor for."""
 
-        Raises:
-            NotImplementedError: If the model is not implemented.
-
-        Returns:
-            None
-        """
         self.masked_portion = masked_portion
 
         self.log_cfg = log_cfg

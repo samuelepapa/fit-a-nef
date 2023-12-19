@@ -1,9 +1,10 @@
-﻿fit\_a\_nef.SignalTrainer
-=========================
+fit\_a\_nef.trainer.SignalTrainer
+=================================
 
-.. currentmodule:: fit_a_nef
+.. currentmodule:: fit_a_nef.trainer
 
 .. autoclass:: SignalTrainer
+   :members:
 
 
    .. automethod:: __init__

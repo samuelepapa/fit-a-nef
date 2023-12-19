@@ -1,9 +1,10 @@
-﻿fit\_a\_nef.SignalImageTrainer
-==============================
+fit\_a\_nef.tasks.image.SignalImageTrainer
+==========================================
 
-.. currentmodule:: fit_a_nef
+.. currentmodule:: fit_a_nef.tasks.image
 
 .. autoclass:: SignalImageTrainer
+   :members:
 
 
    .. automethod:: __init__

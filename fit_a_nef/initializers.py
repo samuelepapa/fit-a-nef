@@ -15,21 +15,27 @@ class InitModel(ABC):
         """Computes the parameters to initialize the model. This method is not supposed to be
         jitted.
 
-        Args:
-            model (nn.Module): The model to initialize.
-            example_input (jnp.ndarray): An example input to the model.
-            num_signals (int): The number of signals being fit.
+        :param model: The model to initialize.
+        :type model: nn.Module
+        :param example_input: An example input to the model.
+        :type example_input: jnp.ndarray
+        :param num_signals: The number of signals being fit.
+        :type num_signals: int
+        :return: The parameters to initialize the model.
         """
         pass
 
 
 class SharedInit(InitModel):
-    def __init__(self, init_rng: jnp.ndarray):
-        """Initialize the initializer object.
+    """Initializes the model with the same parameters for each signal. The parameters are sampled
+    using the same random number generator.
 
-        Args:
-            init_rng (jnp.ndarray): The initial random number generator.
-        """
+    :param init_rng: The initial random number generator.
+    :type init_rng: jnp.ndarray
+    """
+
+    def __init__(self, init_rng: jnp.ndarray):
+        """Constructor method."""
         self.init_rng = init_rng
 
     def __call__(
@@ -42,12 +48,16 @@ class SharedInit(InitModel):
 
 
 class RandomInit(InitModel):
-    def __init__(self, init_rng: jnp.ndarray):
-        """Initialize the initializer object.
+    """Initializes the model with different parameters for each signal. The parameters are sampled
+    using different random number generators. The rng is split for each signal starting from the
+    init_rng.
 
-        Args:
-            init_rng (jnp.ndarray): The initial random number generator.
-        """
+    :param init_rng: The initial random number generator.
+    :type init_rng: jnp.ndarray
+    """
+
+    def __init__(self, init_rng: jnp.ndarray):
+        """Constructor method."""
         self.init_rng = init_rng
 
     def __call__(
@@ -59,12 +69,14 @@ class RandomInit(InitModel):
 
 
 class MetaLearnedInit(InitModel):
-    def __init__(self, meta_learned_init: jnp.ndarray):
-        """Initialize the initializer object.
+    """Initializes all models using the parameters passed in the init.
 
-        Args:
-            meta_learned_init (jnp.ndarray): The meta-learned initialization.
-        """
+    :param meta_learned_init: The meta-learned initialization.
+    :type meta_learned_init: jnp.ndarray
+    """
+
+    def __init__(self, meta_learned_init: jnp.ndarray):
+        """Constructor method."""
         self.meta_learned_init = meta_learned_init
 
     def __call__(

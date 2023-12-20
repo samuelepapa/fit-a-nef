@@ -68,7 +68,7 @@ class SignalImageTrainer(SignalTrainer):
         images_mean: Optional[jnp.ndarray] = None,
         images_std: Optional[jnp.ndarray] = None,
     ):
-        """Constructor for."""
+        """Constructor method."""
 
         self.masked_portion = masked_portion
 

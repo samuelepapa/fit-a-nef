@@ -53,6 +53,32 @@ def stack_cut_tensor(
 
 
 class SignalShapeTrainer(SignalTrainer):
+    """Class used to fit nefs on occupancy signals.
+
+    :param coords: The coordinates to train on.
+    :type coords: jnp.ndarray
+    :param occupancies: The occupancy values to train on.
+    :type occupancies: jnp.ndarray
+    :param train_rng: The rng to use for training.
+    :type train_rng: jnp.ndarray
+    :param nef_cfg: The config for the neural network.
+    :type nef_cfg: Dict[str, Any]
+    :param scheduler_cfg: The config for the scheduler.
+    :type scheduler_cfg: Dict[str, Any]
+    :param optimizer_cfg: The config for the optimizer.
+    :type optimizer_cfg: Dict[str, Any]
+    :param log_cfg: The config for the logger.
+    :type log_cfg: Dict[str, Any]
+    :param initializer: The initializer for the model.
+    :type initializer: InitModel
+    :param num_steps: The number of steps to train for.
+    :type num_steps: int
+    :param verbose: Whether to print progress, defaults to False
+    :type verbose: bool, optional
+    :param num_points: The number of points to use for each shape, defaults to (2048, 2048)
+    :type num_points: Tuple[int, int], optional
+    """
+
     def __init__(
         self,
         coords: jnp.ndarray,
@@ -67,22 +93,7 @@ class SignalShapeTrainer(SignalTrainer):
         verbose: bool = False,
         num_points: Tuple[int, int] = (2048, 2048),
     ):
-        """
-        Args:
-            occupancy (jnp.ndarray): The occupancy values to train on.
-            coords (jnp.ndarray): The coordinates to train on.
-            nef_cfg (Dict[str, Any]): The config for the neural network.
-            scheduler_cfg (Dict[str, Any]): The config for the scheduler.
-            out_channels (int, optional): The number of output channels. Defaults to 1.
-            seed (int, optional): The seed to use. Defaults to 42.
-            num_steps (int, optional): The number of steps to train for. Defaults to 20000.
-
-        Raises:
-            NotImplementedError: If the model is not implemented.
-
-        Returns:
-            None
-        """
+        """Constructor method."""
         self.num_points = num_points
         self.log_cfg = log_cfg
         num_signals = coords.shape[0]

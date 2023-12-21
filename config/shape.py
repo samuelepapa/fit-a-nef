@@ -16,6 +16,7 @@ def get_config(
         logging.info(f"No mode provided, using '{mode}' as default")
 
     cfg = ConfigDict()
+    cfg.task = "shape"
     cfg.nef_dir = find_env_path("NEF_PATH", "saved_models")
     cfg.meta_nef_dir = find_env_path("META_NEF_PATH", "saved_models")
     cfg.seeds = tuple(list(range(10)))

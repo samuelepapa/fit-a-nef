@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
+from absl import logging
 from flax.core.frozen_dict import FrozenDict
 from flax.training import train_state
 
@@ -22,15 +23,13 @@ class TrainState(train_state.TrainState):
 def get_scheduler(scheduler_cfg: Dict[str, Any]) -> optax.Schedule:
     """Returns the scheduler for the given config. All schedulers from optax are supported.
 
-    Args:
-        scheduler_cfg (ConfigDict): The config for the scheduler.
-
-    Raises:
-        NotImplementedError: If the scheduler is not implemented.
-
-    Returns:
-        optax.Schedule: The scheduler.
+    :param scheduler_cfg: The config for the scheduler.
+    :type scheduler_cfg: ConfigDict
+    :raises NotImplementedError: If the scheduler is not implemented.
+    :return: The scheduler.
+    :rtype: optax.Schedule
     """
+
     # raise exception if scheduler is not implemented
     if scheduler_cfg["name"] not in dir(optax):
         raise NotImplementedError(
@@ -48,16 +47,15 @@ def get_optimizer(
 ) -> optax.GradientTransformation:
     """Get the optimizer based on the provided configuration and scheduler.
 
-    Args:
-        optimizer_cfg (Dict[str, Any]): Configuration for the optimizer.
-        scheduler (optax.Schedule): Learning rate schedule.
-
-    Returns:
-        optax.GradientTransformation: Optimizer instance.
-
-    Raises:
-        NotImplementedError: If the specified optimizer is not implemented in optax.
+    :param optimizer_cfg: Configuration for the optimizer.
+    :type optimizer_cfg: Dict[str, Any]
+    :param scheduler: Learning rate schedule.
+    :type scheduler: optax.Schedule
+    :raises NotImplementedError: If the specified optimizer is not implemented in optax.
+    :return: Optimizer instance.
+    :rtype: optax.GradientTransformation
     """
+
     # raise exception if scheduler is not implemented
     if optimizer_cfg["name"] not in dir(optax):
         raise NotImplementedError(
@@ -73,15 +71,13 @@ def get_optimizer(
 def get_nef(nef_cfg: Dict[str, Any]) -> flax.linen.Module:
     """Returns the model for the given config.
 
-    Args:
-        nef_cfg (ConfigDict): The config for the model.
-
-    Raises:
-        NotImplementedError: If the model is not implemented.
-
-    Returns:
-        flax.linen.Module: The model.
+    :param nef_cfg: The config for the model.
+    :type nef_cfg: ConfigDict
+    :raises NotImplementedError: If the model is not implemented.
+    :return: The model.
+    :rtype: flax.linen.Module
     """
+
     if nef_cfg["name"] not in dir(nef):
         raise NotImplementedError(
             f"Model {nef_cfg['name']} not implemented. Available are: {dir(nef)}"
@@ -94,12 +90,14 @@ def get_nef(nef_cfg: Dict[str, Any]) -> flax.linen.Module:
 def flatten_dict(d: Dict, separation: str = "."):
     """Flattens a dictionary.
 
-    Args:
-        d (Dict): The dictionary to flatten.
-
-    Returns:
-        Dict: The flattened dictionary.
+    :param d: The dictionary to flatten.
+    :type d: Dict
+    :param separation: The separation character, defaults to ".".
+    :type separation: str, optional
+    :return: The flattened dictionary.
+    :rtype: Dict
     """
+
     flat_d = {}
     for key, value in d.items():
         if isinstance(value, (dict, FrozenDict)):
@@ -114,13 +112,14 @@ def flatten_dict(d: Dict, separation: str = "."):
 def unflatten_dict(d: Dict, separation: str = "."):
     """Unflattens a dictionary, inverse to flatten_dict.
 
-    Args:
-        d (Dict): The dictionary to unflatten.
-        separation (str, optional): The separation character. Defaults to ".".
-
-    Returns:
-        Dict: The unflattened dictionary.
+    :param d: The dictionary to unflatten.
+    :type d: Dict
+    :param separation: The separation character, defaults to ".".
+    :type separation: str, optional
+    :return: The unflattened dictionary.
+    :rtype: Dict
     """
+
     unflat_d = {}
     for key, value in d.items():
         if separation in key:
@@ -136,17 +135,22 @@ def unflatten_dict(d: Dict, separation: str = "."):
     return unflat_d
 
 
-def flatten_params(params: Any, num_batch_dims: int = 0, param_key: callable = None):
+def flatten_params(
+    params: Any, num_batch_dims: int = 0, param_key: callable = None
+) -> Tuple[List[Tuple[str, List[int]]], jnp.ndarray]:
     """Flattens the parameters of the model.
 
-    Args:
-        params (jax.PyTree): The parameters of the model.
-        num_batch_dims (int, optional): The number of batch dimensions. Tensors will not be flattened over these dimensions. Defaults to 0.
-
-    Returns:
-        List[Tuple[str, List[int]]]: Structure of the flattened parameters.
-        jnp.ndarray: The flattened parameters.
+    :param params: The parameters of the model.
+    :type params: jax.PyTree
+    :param num_batch_dims: The number of batch dimensions. Tensors will not be flattened over these
+        dimensions, defaults to 0.
+    :type num_batch_dims: int, optional
+    :param param_key: The key to sort the parameters, defaults to None.
+    :type param_key: callable, optional
+    :return: Structure of the flattened parameters, the flattened parameters.
+    :rtype: List[Tuple[str, List[int]]], jnp.ndarray
     """
+
     flat_params = flatten_dict(params)
     keys = sorted(list(flat_params.keys()), key=param_key)
     param_config = [(k, flat_params[k].shape[num_batch_dims:]) for k in keys]
@@ -162,13 +166,14 @@ def unflatten_params(
 ):
     """Unflattens the parameters of the model.
 
-    Args:
-        param_config (List[Tuple[str, List[int]]]): Structure of the flattened parameters.
-        comb_params (jnp.ndarray): The flattened parameters.
-
-    Returns:
-        jax.PyTree: The parameters of the model.
+    :param param_config: Structure of the flattened parameters.
+    :type param_config: List[Tuple[str, List[int]]]
+    :param comb_params: The flattened parameters.
+    :type comb_params: jnp.ndarray
+    :return: The parameters of the model.
+    :rtype: jax.PyTree
     """
+
     params = []
     key_dict = {}
     idx = 0
@@ -187,14 +192,16 @@ def unflatten_params(
     return FrozenDict(jax.tree_util.tree_unflatten(jax.tree_util.tree_structure(key_dict), params))
 
 
-# TODO properly implement this.
-def get_meta_init(storage_folder, epoch_index: int):
-    """Load meta-learned initialization for current configuration.
+def get_meta_init(storage_folder: Path, epoch_index: int) -> Union[jnp.ndarray, None]:
+    """Load meta-learned initialization for current configuration. TODO this is not implemented
+    properly yet.
 
-    Args:
-        nef_cfg (Dict[str]): The config for the neural network.
-        cfg (Dict[str]): The config for the experiment.
-        epoch_index (int): The epoch index to load.
+    :param storage_folder: The folder to load the meta-learned initialization from.
+    :type storage_folder: Path
+    :param epoch_index: The epoch index to load.
+    :type epoch_index: int
+    :return: The meta-learned initialization.
+    :rtype: Union[jnp.ndarray, None]
     """
     # Load meta-learned initialization
     meta_init_path = storage_folder / Path(f"meta_init_epoch_{epoch_index}.h5py")
@@ -204,8 +211,8 @@ def get_meta_init(storage_folder, epoch_index: int):
             comb_params = f["params"][:]
             return unflatten_params(param_config, comb_params)
 
-    print(f"Meta init not found at {meta_init_path}.")
-    print(
+    logging.warn(f"Meta init not found at {meta_init_path}.")
+    logging.warn(
         "Please run `python tasks/image/find_init.py --task=config/image.py:find_init ...` to create it."
     )
     return None

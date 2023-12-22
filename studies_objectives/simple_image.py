@@ -7,7 +7,8 @@ import numpy as np
 from absl import logging
 
 from dataset import path_from_name_idxs
-from dataset.data_creation import get_dataset, load_attributes, load_data
+from dataset.data_creation import get_dataset, load_data
+from dataset.image_dataset import MEAN_STD_IMAGE_DATASETS, load_attributes
 from fit_a_nef import RandomInit, SharedInit, SignalImageTrainer
 from tasks.utils import find_seed_idx, get_num_nefs_list, get_signal_idx
 
@@ -42,10 +43,10 @@ def objective(
     )
 
     rng = jax.random.PRNGKey(cfg.seeds[0])
-    init_rng = jax.random.PRNGKey(cfg.seeds[0])
+    train_rng, init_rng = jax.random.split(rng, 2)
 
     avg_visual_metrics = defaultdict(dict)
-    avg_visual_metrics["iou"] = {
+    avg_visual_metrics["psnr"] = {
         "means": [],
         "square_means": [],
         "num_samples": [],
@@ -56,6 +57,8 @@ def objective(
         initializer = SharedInit(init_rng)
     else:
         initializer = RandomInit(init_rng)
+
+    images_mean, images_std = MEAN_STD_IMAGE_DATASETS[cfg.dataset.name]
 
     for i, num_nefs in enumerate(num_nefs_list):
         nef_start_idx = cfg.train.start_idx + sum(num_nefs_list[:i])
@@ -79,14 +82,18 @@ def objective(
         trainer = SignalImageTrainer(
             signals=images,
             coords=coords,
-            images_shape=images_shape,
             nef_cfg=nef_cfg,
             scheduler_cfg=cfg.scheduler,
             optimizer_cfg=cfg.optimizer,
             log_cfg=cfg.log,
             initializer=initializer,
             num_steps=cfg.train.num_steps,
+            train_rng=train_rng,
             masked_portion=cfg.train.masked_portion,
+            verbose=cfg.train.verbose,
+            images_mean=images_mean,
+            images_std=images_std,
+            images_shape=images_shape,
         )
 
         trainer.compile()
@@ -107,7 +114,7 @@ def objective(
         logging.info(f"Time per image: {1000*time_per_image:.2f} ms")
 
         attributes = load_attributes(
-            source_dataset, cfg=cfg, start_idx=start_idx, end_idx=end_idx, attribute_name="labels"
+            source_dataset, start_idx=start_idx, end_idx=end_idx, attribute_name="labels"
         )
 
         trainer.save(

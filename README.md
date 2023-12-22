@@ -11,7 +11,12 @@ Creators: [Samuele Papa](https://samuelepapa.github.io), [Riccardo Valperga](htt
 [![Read the docs](https://img.shields.io/badge/docs-latest-blue)](https://fit-a-nef.readthedocs.io/en/latest/)
 ![Schema](assets/fig-1.png)
 
-**This is the official repository of _both_ the `fit-a-nef` library, and the example of how to use it effectively.**
+**Official repository of _both_ the `fit-a-nef` library, and the example of how to use it effectively.**
+
+📚 This code is the base for the benchmark and study in:  [How to Train Neural Field Representations: A Comprehensive Study and Benchmark](https://fit-a-nef.github.io/) <img src="assets/arxiv.png" width=20px>.
+
+⚙️ For the *neural dataset collection* and to use the neural fields
+as *representations*, see the [neural-field-arena](https://github.com/samuelepapa/neural-field-arena) repository.
 
 ## Motivation
 
@@ -73,6 +78,8 @@ Finally, the library has several neural field architectures already implemented.
 
 For the full documentation, see [here](https://fit-a-nef.readthedocs.io/en/latest/).
 
+**After fitting the neural fields, you can use them as representations for downstream tasks. For example, you can use them to classify images or shapes, or to reconstruct the input signal. For this, we recommend using the framework-independent datasets defined in the [neural-field-arena](https://github.com/samuelepapa/neural-field-arena) repository.**
+
 ## The repository
 
 The library provides trainers that allow fitting images and shapes. Additionally, it allows reliable storing of large-scale neural datasets and has code for several neural field architectures.
@@ -117,9 +124,13 @@ For more details, refer to the [how-to](HOWTO.md) guide.
 If you use this repository in your research, use the following BibTeX entry:
 
 ```bibtex
-@misc{papa2023howtotrain,
-  author = {},
-  title = {},
+@misc{papa2023train,
+  title={How to Train Neural Field Representations: A Comprehensive Study and Benchmark},
+  author={Samuele Papa and Riccardo Valperga and David Knigge and Miltiadis Kofinas and Phillip Lippe and Jan-Jakob Sonke and Efstratios Gavves},
+  year={2023},
+  eprint={2312.10531},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
 }
 ```
 
@@ -143,4 +154,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Acknowledgements and Contributions
 
-We thank Miltiadis Kofinas, and David Romero for the feedback during development.
+We thank [Miltiadis Kofinas](mkofinas.github.io), and David Romero for the feedback during development.

@@ -58,23 +58,34 @@ def _compute_fans(
 
 
 def custom_uniform(
-    numerator: Any = 6,
-    mode="fan_in",
-    dtype: Any = jnp.float_,
+    numerator: float = 6,
+    mode: str = "fan_in",
+    dtype: jnp.dtype = jnp.float_,
     in_axis: Union[int, Sequence[int]] = -2,
     out_axis: Union[int, Sequence[int]] = -1,
     batch_axis: Sequence[int] = (),
-    distribution="uniform",
+    distribution: str = "uniform",
 ) -> Initializer:
     """Builds an initializer that returns real uniformly-distributed random arrays.
 
-    Args:
-      scale: the upper and lower bound of the random distribution.
-      dtype: optional; the initializer's default dtype.
+    :param numerator: the numerator of the range of the random distribution.
+    :type numerator: float
+    :param mode: the mode for computing the range of the random distribution.
+    :type mode: str
+    :param dtype: optional; the initializer's default dtype.
+    :type dtype: jnp.dtype
+    :param in_axis: the axis or axes that specify the input size.
+    :type in_axis: Union[int, Sequence[int]]
+    :param out_axis: the axis or axes that specify the output size.
+    :type out_axis: Union[int, Sequence[int]]
+    :param batch_axis: the axis or axes that specify the batch size.
+    :type batch_axis: Sequence[int]
+    :param distribution: the distribution of the random distribution.
+    :type distribution: str
 
-    Returns:
-      An initializer that returns arrays whose values are uniformly distributed in
-      the range ``[-range, range)``.
+    :return: An initializer that returns arrays whose values are uniformly distributed in
+        the range ``[-range, range)``.
+    :rtype: Initializer
     """
 
     def init(key: KeyArray, shape: core.Shape, dtype: Any = dtype) -> Any:

@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 import faiss
 import flax.linen as nn
@@ -14,16 +14,23 @@ from sklearn.metrics import normalized_mutual_info_score
 # metrics inspired by https://github.com/google-deepmind/dm_pix/blob/master/dm_pix/_src/metrics.py
 
 
-def kmeans(feats, k, niter=100, gpu=False):
+def kmeans(
+    feats: np.ndarray, k: int, niter: int = 100, gpu: bool = False
+) -> Tuple[np.ndarray, np.ndarray]:
     """Compute K-means clustering on the given features.
 
-    Args:
-        feats (np.ndarray): Features to cluster. Shape (N, D).
-        K (int): Number of clusters.
-        niter (int): Number of iterations.
-    Returns:
-        (np.ndarray, np.ndarray): Cluster centers and cluster assignments.
+    :param feats: Features to cluster. Shape (N, D).
+    :type feats: np.ndarray
+    :param k: Number of clusters.
+    :type k: int
+    :param niter: Number of iterations.
+    :type niter: int
+    :param gpu: Whether to use GPU.
+    :type gpu: bool
+    :return: Cluster centers and cluster assignments.
+    :rtype: (np.ndarray, np.ndarray)
     """
+
     kmeans = faiss.Kmeans(d=feats.shape[1], k=k, niter=niter, gpu=gpu)
     kmeans.train(feats)
     _, assignments = kmeans.index.search(feats, 1)
@@ -55,12 +62,13 @@ def simse(a: jax.Array, b: jax.Array) -> jax.Array:
     This metric was used in "Shape, Illumination, and Reflectance from Shading" by
     Barron and Malik, TPAMI, '15.
 
-    Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+    :param a: First image (or set of images).
+    :type a: jax.Array
+    :param b: Second image (or set of images).
+    :type b: jax.Array
 
-    Returns:
-      SIMSE between `a` and `b`.
+    :return: SIMSE between `a` and `b`.
+    :rtype: jax.Array
     """
 
     a_dot_b = (a * b).sum()
@@ -73,12 +81,13 @@ def simse(a: jax.Array, b: jax.Array) -> jax.Array:
 def rmse(a: jax.Array, b: jax.Array) -> jax.Array:
     """Returns the Mean Squared Error between `a` and `b`.
 
-    Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+    :param a: First image (or set of images).
+    :type a: jax.Array
+    :param b: Second image (or set of images).
+    :type b: jax.Array
 
-    Returns:
-      MSE between `a` and `b`.
+    :return: MSE between `a` and `b`.
+    :rtype: jax.Array
     """
     return jnp.sqrt(mse(a, b))
 
@@ -87,12 +96,13 @@ def rmse(a: jax.Array, b: jax.Array) -> jax.Array:
 def mse(a: jax.Array, b: jax.Array) -> jax.Array:
     """Returns the Mean Squared Error between `a` and `b`.
 
-    Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+    :param a: First image (or set of images).
+    :type a: jax.Array
+    :param b: Second image (or set of images).
+    :type b: jax.Array
 
-    Returns:
-      MSE between `a` and `b`.
+    :return: MSE between `a` and `b`.
+    :rtype: jax.Array
     """
     return jnp.square(a - b).mean()
 
@@ -101,12 +111,13 @@ def mse(a: jax.Array, b: jax.Array) -> jax.Array:
 def mae(a: jax.Array, b: jax.Array) -> jax.Array:
     """Returns the Mean Absolute Error between `a` and `b`.
 
-    Args:
-      a: First image (or set of images).
-      b: Second image (or set of images).
+    :param a: First image (or set of images).
+    :type a: jax.Array
+    :param b: Second image (or set of images).
+    :type b: jax.Array
 
-    Returns:
-      MAE between `a` and `b`.
+    :return: MAE between `a` and `b`.
+    :rtype: jax.Array
     """
     return jnp.abs(a - b).mean()
 
@@ -114,9 +125,18 @@ def mae(a: jax.Array, b: jax.Array) -> jax.Array:
 def iou(occ1: jax.Array, occ2: jax.Array) -> np.ndarray:
     """Computes the Intersection over Union (IoU) value for two sets of occupancy values.
 
-    Args:
-        occ1 (jax.Array): first set of occupancy values
-        occ2 (jax.Array): second set of occupancy values
+    The formula used is the following:
+
+    .. math::
+        \\text{IoU} = \\frac{|A \\cap B|}{|A \\cup B|}
+
+    :param occ1: first set of occupancy values
+    :type occ1: jax.Array
+    :param occ2: second set of occupancy values
+    :type occ2: jax.Array
+
+    :return: IoU value
+    :rtype: np.ndarray
     """
     occ1 = np.asarray(occ1)
     occ2 = np.asarray(occ2)
@@ -151,13 +171,18 @@ def psnr(
 
     https://github.com/photosynthesis-team/piq/blob/master/piq/psnr.py
 
-    Args:
-        - image (jnp.ndarray): the first tensor used in the calculation.
-        - ground_truth (jnp.ndarray): the second tensor used in the calculation.
-    Returns:
-        (jnp.ndarray) with the mean of the PNSR of the image according to the peak
-        signal that can be obtained in ground_truth:
+    :param image: the first tensor used in the calculation.
+    :type image: jnp.ndarray
+    :param ground_truth: the second tensor used in the calculation.
+    :type ground_truth: jnp.ndarray
+    :param mean: the mean of the dataset.
+    :type mean: jnp.ndarray
+    :param std: the standard deviation of the dataset.
+    :type std: jnp.ndarray
+
+    :return: the mean of the PNSR of the image according to the peak signal that can be obtained in ground_truth:
         mean(log10(peak_signal**2/MSE(image-ground_truth))).
+    :rtype: jnp.ndarray
     """
     # change the view to compute the metric in a batched way correctly
     w_image = image * std + mean
@@ -202,22 +227,31 @@ def ssim(
     perform any colorspace transform. If the input is in a color space, then it
     will compute the average SSIM.
 
-    Args:
-        a: First image (or set of images).
-        b: Second image (or set of images).
-        max_val: The maximum magnitude that `a` or `b` can have.
-        filter_size: Window size (>= 1). Image dims must be at least this small.
-        filter_sigma: The bandwidth of the Gaussian used for filtering (> 0.).
-        k1: One of the SSIM dampening parameters (> 0.).
-        k2: One of the SSIM dampening parameters (> 0.).
-        return_map: If True, will cause the per-pixel SSIM "map" to be returned.
-        precision: The numerical precision to use when performing convolution.
-        filter_fn: An optional argument for overriding the filter function used by
-            SSIM, which would otherwise be a 2D Gaussian blur specified by filter_size
-            and filter_sigma.
+    :param a: First image (or set of images).
+    :type a: jax.Array
+    :param b: Second image (or set of images).
+    :type b: jax.Array
+    :param max_val: The maximum magnitude that `a` or `b` can have.
+    :type max_val: float
+    :param filter_size: Window size (>= 1). Image dims must be at least this small.
+    :type filter_size: int
+    :param filter_sigma: The bandwidth of the Gaussian used for filtering (> 0.).
+    :type filter_sigma: float
+    :param k1: One of the SSIM dampening parameters (> 0.).
+    :type k1: float
+    :param k2: One of the SSIM dampening parameters (> 0.).
+    :type k2: float
+    :param return_map: If True, will cause the per-pixel SSIM "map" to be returned.
+    :type return_map: bool
+    :param precision: The numerical precision to use when performing convolution.
+    :type precision: jax.lax.Precision
+    :param filter_fn: An optional argument for overriding the filter function used by
+        SSIM, which would otherwise be a 2D Gaussian blur specified by filter_size
+        and filter_sigma.
+    :type filter_fn: Optional[Callable[[jax.Array], jax.Array]]
 
-    Returns:
-        Each image's mean SSIM, or a tensor of individual values if `return_map`.
+    :return: Each image's mean SSIM, or a tensor of individual values if `return_map`.
+    :rtype: jax.Array
     """
 
     if filter_fn is None:

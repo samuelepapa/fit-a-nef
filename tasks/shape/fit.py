@@ -137,8 +137,15 @@ def main(_):
 
         logging.info("Training starting.")
 
-        start_time = time.time()
-        trainer.train_model()
+        if cfg.train.train_to_target_iou is not None:
+            start_time = time.time()
+            trainer.train_to_target_iou(
+                cfg.train.train_to_target_iou, check_every=cfg.train.check_every
+            )
+        else:
+            start_time = time.time()
+            trainer.train_model()
+
         end_time = time.time()
 
         logging.info(f"Training done in {end_time - start_time:.2f}s.")

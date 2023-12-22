@@ -29,11 +29,13 @@ def get_config(
     cfg.train.num_steps = 5000
     cfg.train.multi_gpu = True  # Whether we're using multiple GPUs
     cfg.train.fixed_init = False
-    cfg.train.verbose = True
+    cfg.train.verbose = False
     cfg.train.num_points = (2048, 2048)  # Number of points in the mesh and outside the mesh
     # Whether to use meta-learned initialization
     cfg.train.from_meta_init = False
     cfg.train.meta_init_epoch = 10
+    cfg.train.train_to_target_iou = False
+    cfg.train.check_every = 10
 
     cfg.mode = mode
     cfg.task = "shape"

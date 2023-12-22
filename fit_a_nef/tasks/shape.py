@@ -260,3 +260,9 @@ class SignalShapeTrainer(SignalTrainer):
             num_steps += 1
 
         return num_steps
+
+    def extract_and_save_meshes(self, save_folder: Path):
+        for i in range(self.num_signals):
+            mesh = extract_mesh_from_neural_field(self.apply_model, shape_idx=i)
+            export_path = save_folder / Path(f"mesh-{i}.obj")
+            mesh.export(export_path)

@@ -11,9 +11,8 @@ from dataset import path_from_name_idxs
 from dataset.data_creation import get_dataset
 from dataset.image_dataset.image_data import load_attributes
 from dataset.shape_dataset.shape_data import load_shapes
-from fit_a_nef import MetaLearnedInit, RandomInit, SharedInit
+from fit_a_nef import MetaLearnedInit, RandomInit, SharedInit, SignalShapeTrainer
 from fit_a_nef.utils import get_meta_init
-from tasks.shape.trainer import ShapeTrainer
 from tasks.utils import find_seed_idx, get_num_nefs_list, get_signal_idx
 
 try:
@@ -102,8 +101,6 @@ def main(_):
             logging.info(f"Skipping nefs {nef_start_idx} - {nef_end_idx} as they already exist.")
             continue
 
-        loader = load_shapes(source_dataset, start_idx, end_idx, batch_size=num_nefs)
-
         if cfg.log.use_wandb and WANDB_AVAILABLE:
             wandb.init(
                 project=cfg.wandb.project,
@@ -112,8 +109,14 @@ def main(_):
                 config={"cfg": dict(cfg), "nef_cfg": dict(nef_cfg)},
             )
 
-        trainer = ShapeTrainer(
-            loader=loader,
+        loader = load_shapes(source_dataset, start_idx, end_idx, batch_size=num_nefs)
+
+        # Get the coords and occupancies
+        coords, occupancies, labels = next(iter(loader))
+
+        trainer = SignalShapeTrainer(
+            coords=coords,
+            occupancies=occupancies,
             nef_cfg=nef_cfg,
             scheduler_cfg=cfg.scheduler,
             optimizer_cfg=cfg.optimizer,
@@ -140,7 +143,7 @@ def main(_):
 
         logging.info(f"Training done in {end_time - start_time:.2f}s.")
 
-        attributes = {"labels": trainer.labels}
+        attributes = {"labels": labels}
 
         trainer.save(
             storage_folder / Path(path_from_name_idxs("nefs", nef_start_idx, nef_end_idx)),

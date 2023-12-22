@@ -23,12 +23,13 @@ def get_config(
     # Train
     cfg.train = ConfigDict()
     cfg.train.start_idx = 0
-    cfg.train.end_idx = 1000
+    cfg.train.end_idx = 100
     cfg.train.num_parallel_nefs = 10
-    cfg.train.num_steps = 500
+    cfg.train.num_steps = 5000
     cfg.train.multi_gpu = True  # Whether we're using multiple GPUs
     cfg.train.fixed_init = False
     cfg.train.verbose = True
+    cfg.train.num_points = (2048, 2048)  # Number of points in the mesh and outside the mesh
     # Whether to use meta-learned initialization
     cfg.train.from_meta_init = False
     cfg.train.meta_init_epoch = 10
@@ -66,12 +67,14 @@ def get_config(
         cfg.store_models = False
         cfg.store_meshes = True
 
+        cfg.log.shapes_temp_dir = find_env_path("SHAPES_TEMP_DIR", "shapes_temp_dir")
+
         # Optuna
         cfg.optuna = ConfigDict()
         cfg.optuna.num_trials = 1
         cfg.optuna.n_jobs = 1
         cfg.optuna.direction = ("maximize",)
-        cfg.study_objective = "simple_tune"
+        cfg.study_objective = "simple_shape"
         cfg.optuna.study_name = "validation_iou"
 
     elif mode == "histograms_num_steps":

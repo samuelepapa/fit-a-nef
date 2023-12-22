@@ -15,7 +15,7 @@ def extract_mesh_from_neural_field(
     points_batch_size: int = 100000,
     threshold: float = 0.5,
     resolution0: int = 32,
-    upsampling_steps: int = 2,
+    upsampling_steps: int = 3,
     padding: float = 0.1,
 ):
     """Mesh Extraction class for occupancy neural fields.

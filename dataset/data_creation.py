@@ -181,6 +181,5 @@ def load_data(
             source_dataset=source_dataset,
             start_idx=start_idx,
             end_idx=end_idx,
-            batch_size=end_idx - start_idx,
             **kwargs,
         )

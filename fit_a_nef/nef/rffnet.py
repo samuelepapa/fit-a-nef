@@ -4,11 +4,17 @@ from jax import lax
 
 
 def RFFNet_key(param_name, nef_cfg):
+    # encoding first
+    if param_name.startswith("encoding."):
+        return 0
+
     # bias before kernel, ordered based on layer number
     if param_name.startswith("linear_final."):
-        index = 2 * (nef_cfg.get("num_layers") - 1)
+        index = 2 * (nef_cfg.get("num_layers"))
     else:
-        index = 2 * int(param_name.split(".")[0].split("_")[-1])
+        index = (
+            2 * int(param_name.split(".")[0].split("_")[-1])
+        ) + 1  # plus one to skip over encoding
 
     if param_name.endswith(".bias"):
         return index

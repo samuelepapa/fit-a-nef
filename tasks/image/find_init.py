@@ -7,9 +7,8 @@ import matplotlib.pyplot as plt
 from absl import app, logging
 from fast_fitting import MetaInitImageTrainer
 from ml_collections import config_flags
-from nef.utils import store_cfg
 
-from config import load_cfgs
+from config import load_cfgs, store_cfg
 from config.optimizer import get_config as get_optimizer_config
 from config.scheduler import get_config as get_scheduler_config
 from dataset.data_creation import get_dataset

@@ -4,7 +4,7 @@ import pickle
 from abc import ABC, abstractmethod
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import h5py
 import jax
@@ -16,11 +16,11 @@ from absl import logging
 # JAX
 from flax.training import train_state
 
-from fit_a_nef.initializers import InitModel, MetaLearnedInit, RandomInit, SharedInit
-from fit_a_nef.nef import param_key_dict
+from .initializers import InitModel, MetaLearnedInit, RandomInit, SharedInit
+from .nef import param_key_dict
 
 # Misc
-from fit_a_nef.utils import (
+from .utils import (
     TrainState,
     flatten_params,
     get_nef,
@@ -31,6 +31,30 @@ from fit_a_nef.utils import (
 
 
 class SignalTrainer:
+    """Base class for training neural networks.
+
+    :param coords: the coordinates to train on
+    :type coords: jnp.ndarray
+    :param signals: the signal values to train on, i.e. images (pixel values) objects (occupancy)
+    :type signals: jnp.ndarray
+    :param nef_cfg: the config for the neural network
+    :type nef_cfg: Dict[str, Any]
+    :param scheduler_cfg: the config for the scheduler
+    :type scheduler_cfg: Dict[str, Any]
+    :param optimizer_cfg: the config for the optimizer
+    :type optimizer_cfg: Dict[str, Any]
+    :param initializer: the initializer for the model, see initializers.py for more info
+    :type initializer: InitModel
+    :param train_rng: the random number generator to use for training
+    :type train_rng: jnp.ndarray
+    :param num_signals: the number of signals being fit
+    :type num_signals: int
+    :param num_steps: the number of steps to train for, defaults to 20000
+    :type num_steps: int, optional
+    :param verbose: whether to have verbose training or not, defaults to False. Overwrite the :func:`verbose_train_model` function to change the logging behavior.
+    :type verbose: bool, optional
+    """
+
     def __init__(
         self,
         coords: jnp.ndarray,
@@ -44,23 +68,7 @@ class SignalTrainer:
         num_steps: int = 20000,
         verbose: bool = False,
     ):
-        """
-        Base class for training neural networks.
-        Args:
-            signals (jnp.ndarray): The signal values to train on, i.e. images (pixel values) objects (occupancy).
-            coords (jnp.ndarray): The coordinates to train on.
-            nef_cfg (Dict[str, Any]): The config for the neural network.
-            scheduler_cfg (Dict[str, Any]): The config for the scheduler.
-            out_channels (int, optional): The number of output channels. Defaults to 1.
-            seed (int, optional): The seed to use. Defaults to 42.
-            num_steps (int, optional): The number of steps to train for. Defaults to 20000.
-
-        Raises:
-            NotImplementedError: If the model is not implemented.
-
-        Returns:
-            None
-        """
+        """Constructor."""
         super().__init__()
 
         self.coords = coords
@@ -83,6 +91,15 @@ class SignalTrainer:
         self.create_functions()
 
     def create_functions(self):
+        """Creates the functions needed for training the model. This includes the loss function,
+        the train step and the train model functions.
+
+        This is needed to allow for proper handling of the Jax JIT compilation of the train_step
+        function.
+
+        For the train_model function, this allows to switch between verbose and fast training
+        without any computational overhead during the actual fitting.
+        """
         if not hasattr(self, "loss_fn"):
             self.create_loss()
 
@@ -104,14 +121,36 @@ class SignalTrainer:
 
         self.train_step = jax.jit(train_step)
 
-    def process_batch(self, state, coords, signals):
+    def process_batch(
+        self, state: TrainState, coords: jnp.ndarray, signals: jnp.ndarray
+    ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        """Used to process the batch before passing it to the loss function. This is useful for
+        selecting specific coordinates or changing the shapes of the signals.
+
+        :param state: the current state of the training, used for functional programming.
+        :type state: TrainState
+        :param coords: the coordinates to process.
+        :type coords: jnp.ndarray
+        :param signals: the signals to process.
+        :type signals: jnp.ndarray
+        :return: the processed coordinates, signals and the random number generator.
+        :rtype: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]
+        """
         rng, cur_rng = jax.random.split(state.rng)
         return coords, signals, rng
 
     def init_model(
         self,
         example_input: jnp.ndarray,
-    ):
+    ) -> None:
+        """Initializes the model parameters using the initializer defined in the constructor.
+
+        :param example_input: An example input to the model. Used by Jax to initialize the model
+            correctly.
+        :type example_input: jnp.ndarray
+        :return: None
+        :rtype: None
+        """
         # Initialize model parameters
         params = self.initializer(self.model, example_input, self.num_signals)
 
@@ -124,68 +163,67 @@ class SignalTrainer:
             apply_fn=self.model.apply, params=params, tx=optimizer, rng=self.train_rng
         )
 
-    def compile(self):
+    def compile(self) -> None:
         """Executes the training function ones to compile the train_step.
 
-        Args:
-            None
-
-        Returns:
-            None
+        :return: None
+        :rtype: None
         """
+
         _ = self.train_step(self.state, self.coords, self.signals)
 
-    def create_train_model(self):
-        """Trains the model for the given number of epochs.
+    def create_train_model(self) -> None:
+        """Creates the train_model function. This is used to switch between verbose and fast
+        training without any computational overhead during the actual fitting.
 
-        Args:
-            num_epochs (int): The number of epochs to train for.
-
-        Returns:
-            None
+        :return: None
+        :rtype: None
         """
         if self.verbose:
             self.train_model = self.verbose_train_model
         else:
             self.train_model = self.fast_train_model
 
-    def fast_train_model(
-        self,
-    ):
+    def fast_train_model(self) -> None:
+        """Quickly trains the model for the number of steps specified in the init function."""
         for _ in range(1, self.num_steps + 1):
             self.state, _ = self.train_step(self.state, self.coords, self.signals)
 
-    def verbose_train_model(
-        self,
-    ):
+    def verbose_train_model(self) -> None:
+        """Trains the model for the number of steps specified in the init function and logs the
+        loss every 100 steps."""
         for step in range(1, self.num_steps + 1):
             self.state, loss = self.train_step(self.state, self.coords, self.signals)
             if step % 100 == 0:
                 logging.info(f"Step {step}, loss {loss}")
 
-    def get_params(self, model_id: Optional[int] = None):
-        """Returns the params for a given model ID.
+    def get_params(self, model_id: Optional[int] = None) -> jnp.ndarray:
+        """Returns the params for a given model ID or all params if no model ID is specified.
 
-        Args:
-            model_id (int): The model ID to get the params for.
-
-        Returns:
-            jax.tree_util.PartiallyMutableTree: The params for the given model ID.
+        :param model_id: The model ID to get the params for or None to get all params.
+        :type model_id: int, optional
+        :return: The params for the given model ID or all params if no model ID is specified.
+        :rtype: jnp.ndarray
         """
+
         if model_id is None:
             return self.state.params
         else:
             return jax.tree_map(lambda x: x[model_id], self.state.params)
 
-    def get_flat_params(self, model_id: Optional[int] = None) -> Tuple[np.ndarray, str]:
-        """Returns the params for a given model ID.
+    def get_flat_params(
+        self, model_id: Optional[int] = None
+    ) -> Tuple[jnp.ndarray, List[Tuple[str, List[int]]]]:
+        """Returns the *flattened* params for a given model ID or all params if no model ID is
+        specified.
 
-        Args:
-            model_id (int): The model ID to get the params for.
-
-        Returns:
-            jax.tree_util.PartiallyMutableTree: The params for the given model ID.
+        :param model_id: The model ID to get the params for or None to get all params.
+        :type model_id: int, optional
+        :return: A tuple with the *flattened* params for the given model ID or all params if no
+            model ID is specified, and the param configuration.
+        :rtype: Tuple[jnp.ndarray, List[Tuple[str, List[int]]]]
         """
+
         if model_id is None:
             params = self.state.params
         else:
@@ -198,16 +236,17 @@ class SignalTrainer:
 
         return comb_params, param_config
 
-    def apply_model(self, coords: jnp.ndarray, model_id: Optional[int] = None):
+    def apply_model(self, coords: jnp.ndarray, model_id: Optional[int] = None) -> jnp.ndarray:
         """Applies the model to a given set of coordinates.
 
-        Args:
-            model_id (int): The model ID to apply.
-            coords (jnp.ndarray): The coordinates to apply the model to.
-
-        Returns:
-            jnp.ndarray: The output of the model.
+        :param coords: The coordinates to apply the model to.
+        :type coords: jnp.ndarray
+        :param model_id: The model ID to apply. Defaults to None in which case all models are used.
+        :type model_id: int, optional
+        :return: The output of the model.
+        :rtype: jnp.ndarray
         """
+
         if model_id is None:
             return jax.vmap(lambda params: self.model.apply({"params": params}, coords))(
                 self.state.params
@@ -215,8 +254,17 @@ class SignalTrainer:
         else:
             return self.model.apply({"params": self.get_params(model_id)}, coords)
 
-    def save(self, path: Path, **kwargs):
-        """Save the parameters to a pickle file."""
+    def save(self, path: Path, **kwargs) -> None:
+        """Save the parameters to a hdf5 file.
+
+        :param path: The path to save the parameters to.
+        :type path: Path
+        :param kwargs: Additional data to save.
+        :type kwargs: Dict[str, Any]
+        :return: None
+        :rtype: None
+        """
+
         param_config, comb_params = flatten_params(
             self.state.params, num_batch_dims=1, param_key=self.param_key
         )
@@ -233,9 +281,15 @@ class SignalTrainer:
                     value = jax.device_get(value)
                 f.create_dataset(key, data=value)
 
-    def load(self, path: Path):
-        """Used to load the parameters from a pickle file that can be created using the `save`
-        function."""
+    def load(self, path: Path) -> None:
+        """Used to load the parameters from a hdf5 file that can be created using the `save`
+        function.
+
+        :param path: The path to load the parameters from.
+        :type path: Path
+        :return: None
+        :rtype: None
+        """
         with h5py.File(path, "r") as f:
             param_config = json.loads(f["param_config"][0].decode("utf-8"))
             comb_params = f["params"][:]
@@ -243,6 +297,14 @@ class SignalTrainer:
         self.state = self.state.replace(params=params)
 
     def clean_up(self, clear_caches=True):
+        """Cleans up the trainer by deleting the state and train_step attributes. This is useful to
+        free up memory.
+
+        :param clear_caches: Whether to clear the Jax caches or not. Defaults to True.
+        :type clear_caches: bool, optional
+        :return: None
+        :rtype: None
+        """
         del self.state
         if hasattr(self, "train_step"):
             del self.train_step
@@ -250,6 +312,11 @@ class SignalTrainer:
             jax.clear_caches()
 
     def get_lr(self):
+        """Returns the current learning rate.
+
+        :return: The current learning rate.
+        :rtype: float
+        """
         schedule = self.lr_schedule
         if schedule is None:
             logging.warning("No learning rate schedule found.")

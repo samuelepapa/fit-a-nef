@@ -16,6 +16,17 @@ To get started with contributing, please follow these steps:
 
 ## Guidelines
 
+The repository follows the "make it simple, not easy" philosophy ([see here](https://www.entropywins.wtf/blog/2017/01/02/simple-is-not-easy/)).
+
+We prioritize extensibility, and strong independence between packages.
+This means that we prefer to have several simple components that have a small set of functionalities and leave the
+onus of building powerful software to the end user.
+
+The code does not need to be as concise as it could be.
+However, it must always be easy to add new tasks, new neural fields, and new datasets.
+Additionally, the dataset format must be standardized across tasks.
+Finally, always provide clear documentation and error messages.
+
 Before committing, please ensure to have `pre-commit` installed. This will ensure that the code is formatted correctly and that the tests pass. To install it, run:
 
 ```bash

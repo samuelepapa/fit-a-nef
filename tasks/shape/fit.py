@@ -13,6 +13,7 @@ from dataset.image_dataset.image_data import load_attributes
 from dataset.shape_dataset.shape_data import load_shapes
 from fit_a_nef import MetaLearnedInit, RandomInit, SharedInit, SignalShapeTrainer
 from fit_a_nef.utils import get_meta_init
+from tasks.shape.trainer import CustomSignalShapeTrainer
 from tasks.utils import find_seed_idx, get_num_nefs_list, get_signal_idx
 
 try:
@@ -114,7 +115,7 @@ def main(_):
         # Get the coords and occupancies
         coords, occupancies, labels = next(iter(loader))
 
-        trainer = SignalShapeTrainer(
+        trainer = CustomSignalShapeTrainer(
             coords=coords,
             occupancies=occupancies,
             nef_cfg=nef_cfg,

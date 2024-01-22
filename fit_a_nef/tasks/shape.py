@@ -8,8 +8,6 @@ import numpy as np
 import optax
 from absl import logging
 
-from dataset.shape_dataset.utils import extract_mesh_from_neural_field
-
 from ..initializers import InitModel
 from ..metrics import iou
 from ..trainer import SignalTrainer
@@ -218,23 +216,6 @@ class SignalShapeTrainer(SignalTrainer):
                         )
                     logging.info(f"Step: {step_num}. IOU: {mean_iou}")
 
-                if step_num % self.log_cfg.meshes == 0 or (step_num == self.num_steps):
-                    if WANDB_AVAILABLE and self.log_cfg.use_wandb:
-                        for i in range(self.max_shapes_logged):
-                            mesh = extract_mesh_from_neural_field(self.apply_model, shape_idx=i)
-                            export_path = self.log_cfg.shapes_temp_dir / Path(f"mesh-{i}.obj")
-                            mesh.export(export_path)
-                            wandb.log(
-                                {
-                                    f"mesh-{i}": wandb.Object3D(
-                                        str(export_path), parse_model_format="obj"
-                                    ),
-                                },
-                                step=step_num,
-                            )
-                        else:
-                            logging.info("Wandb not available. Skipping logging shapes.")
-
     def apply_model_all_coords(self):
         return jax.vmap(
             fun=lambda params, coords: self.model.apply({"params": params}, coords), in_axes=(0, 0)
@@ -260,9 +241,3 @@ class SignalShapeTrainer(SignalTrainer):
             num_steps += 1
 
         return num_steps
-
-    def extract_and_save_meshes(self, save_folder: Path):
-        for i in range(self.num_signals):
-            mesh = extract_mesh_from_neural_field(self.apply_model, shape_idx=i)
-            export_path = save_folder / Path(f"mesh-{i}.obj")
-            mesh.export(export_path)

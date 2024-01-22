@@ -6,9 +6,9 @@ import jax.numpy as jnp
 import optax
 from absl import logging
 
-from fit_a_nef.initializers import InitModel
-from fit_a_nef.metrics import mae, mse, psnr, simse, ssim
-from fit_a_nef.trainer import SignalTrainer
+from ..initializers import InitModel
+from ..metrics import mae, mse, psnr, simse, ssim
+from ..trainer import SignalTrainer
 
 try:
     import wandb
@@ -19,6 +19,38 @@ except ImportError:
 
 
 class SignalImageTrainer(SignalTrainer):
+    """Fit a set of neural fields to a set of images, given a certain initialization method.
+
+    :param signals: The images to fit to.
+    :type signals: jnp.ndarray
+    :param coords: The coordinates of the images.
+    :type coords: jnp.ndarray
+    :param train_rng: The random number generator to use.
+    :type train_rng: jnp.ndarray
+    :param nef_cfg: The config for the neural fields.
+    :type nef_cfg: Dict[str, Any]
+    :param scheduler_cfg: The config for the scheduler.
+    :type scheduler_cfg: Dict[str, Any]
+    :param optimizer_cfg: The config for the optimizer.
+    :type optimizer_cfg: Dict[str, Any]
+    :param initializer: The initializer to use.
+    :type initializer: InitModel
+    :param log_cfg: The config for the logger. Defaults to None.
+    :type log_cfg: Optional[Dict[str, Any]], optional
+    :param num_steps: The number of steps to train for. Defaults to 500.
+    :type num_steps: int, optional
+    :param verbose: Whether to log the training. Defaults to False.
+    :type verbose: bool, optional
+    :param masked_portion: The portion of the image to mask. Defaults to 0.5.
+    :type masked_portion: float, optional
+    :param images_shape: The shape of the images. Defaults to None.
+    :type images_shape: Optional[Tuple[int, int, int]], optional
+    :param images_mean: The mean of the images. Defaults to None.
+    :type images_mean: Optional[jnp.ndarray], optional
+    :param images_std: The std of the images. Defaults to None.
+    :type images_std: Optional[jnp.ndarray], optional
+    """
+
     def __init__(
         self,
         signals: jnp.ndarray,
@@ -36,23 +68,8 @@ class SignalImageTrainer(SignalTrainer):
         images_mean: Optional[jnp.ndarray] = None,
         images_std: Optional[jnp.ndarray] = None,
     ):
-        """
-        Args:
-            images (jnp.ndarray): The images to train on.
-            coords (jnp.ndarray): The coordinates to train on.
-            nef_cfg (Dict[str, Any]): The config for the neural network.
-            scheduler_cfg (Dict[str, Any]): The config for the scheduler.
-            out_channels (int, optional): The number of output channels. Defaults to 1.
-            seed (int, optional): The seed to use. Defaults to 42.
-            num_images (int, optional): The number of images to train on. Defaults to 5.
-            num_steps (int, optional): The number of steps to train for. Defaults to 20000.
+        """Constructor method."""
 
-        Raises:
-            NotImplementedError: If the model is not implemented.
-
-        Returns:
-            None
-        """
         self.masked_portion = masked_portion
 
         self.log_cfg = log_cfg
@@ -175,7 +192,7 @@ class SignalImageTrainer(SignalTrainer):
             check_every (int): How often to check the psnr.
             mean (float): The mean of the dataset. Used in the psnr calculation.
             std (float): The std of the dataset. Used in the psnr calculation.
-        
+
         Returns:
             num_steps (int): The number of steps it took to reach the target psnr.
         """
@@ -195,8 +212,8 @@ class SignalImageTrainer(SignalTrainer):
         return num_steps
 
     def psnr(self):
-        """
-        Calculate the Peak Signal-to-Noise Ratio (PSNR) between the reconstructed images and the original images.
+        """Calculate the Peak Signal-to-Noise Ratio (PSNR) between the reconstructed images and the
+        original images.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean PSNR and the mean squared PSNR.
@@ -206,8 +223,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def mae(self):
-        """
-        Calculate the mean absolute error (MAE) between the reconstructed signals and the original signals.
+        """Calculate the mean absolute error (MAE) between the reconstructed signals and the
+        original signals.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean of the MAE metric and the mean squared MAE metric.
@@ -217,8 +234,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def mse(self):
-        """
-        Calculates the mean squared error (MSE) between the reconstructed signals and the original signals.
+        """Calculates the mean squared error (MSE) between the reconstructed signals and the
+        original signals.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean MSE and the mean squared MSE.
@@ -228,8 +245,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def ssim(self):
-        """
-        Calculates the Structural Similarity Index (SSIM) between the reconstructed images and the original signals.
+        """Calculates the Structural Similarity Index (SSIM) between the reconstructed images and
+        the original signals.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean SSIM and the mean squared SSIM.
@@ -242,8 +259,8 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def simse(self):
-        """
-        Calculate the Structural Similarity Index (SIMSE) between the reconstructed image and the original signal.
+        """Calculate the Structural Similarity Index (SIMSE) between the reconstructed image and
+        the original signal.
 
         Returns:
             Tuple[float, float]: A tuple containing the mean SIMSE and the mean squared SIMSE.
@@ -253,13 +270,12 @@ class SignalImageTrainer(SignalTrainer):
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
 
     def validation_psnr(self):
-        """
-        Calculate the Peak Signal-to-Noise Ratio (PSNR) for the validation images.
+        """Calculate the Peak Signal-to-Noise Ratio (PSNR) for the validation images.
 
         Returns:
             Tuple[float, float]: The mean PSNR and the mean squared PSNR.
         """
-        
+
         # TODO move this in the init, no need to calculate every time.
         x = jnp.linspace(0.5, self.images_shape[0] - 0.5, self.images_shape[0] - 1)
         y = jnp.linspace(0.5, self.images_shape[1] - 0.5, self.images_shape[1] - 1)

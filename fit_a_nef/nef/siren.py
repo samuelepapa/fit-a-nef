@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from flax import linen as nn
 
-from fit_a_nef.nef.utils import custom_uniform
+from ..nef.utils import custom_uniform
 
 
 def SIREN_key(param_name, nef_cfg):

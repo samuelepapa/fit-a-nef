@@ -5,18 +5,24 @@ from pathlib import Path
 import jax
 import numpy as np
 from absl import logging
-from fast_fitting import TuningShapeTrainer
 
 from dataset import path_from_name_idxs
 from dataset.data_creation import get_dataset, load_data
+from fit_a_nef import RandomInit, SharedInit, SignalShapeTrainer
 from tasks.utils import find_seed_idx, get_num_nefs_list, get_signal_idx
+
+try:
+    import wandb
+
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
 
 
 def objective(
     trial,
     cfg,
     nef_cfg,
-    classifier_cfg,
     experiment_folder,
     **kwargs,
 ):
@@ -45,6 +51,14 @@ def objective(
     rng = jax.random.PRNGKey(cfg.seeds[0])
     init_rng = jax.random.PRNGKey(cfg.seeds[0])
 
+    init_rngs_per_seed = [jax.random.PRNGKey(seed) for seed in cfg.seeds]
+
+    # setup the initializer
+    if cfg.train.fixed_init:
+        initializers = [SharedInit(init_rngs_per_seed[i]) for i in range(len(cfg.seeds))]
+    else:
+        initializers = [RandomInit(init_rngs_per_seed[i]) for i in range(len(cfg.seeds))]
+
     avg_visual_metrics = defaultdict(dict)
     avg_visual_metrics["iou"] = {
         "means": [],
@@ -66,7 +80,7 @@ def objective(
 
         # select the seed from the list of available seeds
         seed = cfg.seeds[find_seed_idx(nef_start_idx, signals_in_dset)]
-
+        train_rng = jax.random.PRNGKey(seed)
         start_idx = get_signal_idx(nef_start_idx, signals_in_dset)
         end_idx = get_signal_idx(nef_end_idx - 1, signals_in_dset) + 1
 
@@ -81,22 +95,29 @@ def objective(
             shuffle=True,  # Unsure how to shuffle this and keep consistent with labeling
         )
 
-        if not cfg.train.fixed_init:
-            cur_init_rng, init_rng = jax.random.split(init_rng, 2)
-        else:
-            cur_init_rng = init_rng
+        # Get the coords and occupancies
+        coords, occupancies, labels = next(iter(loader))
 
-        trainer = TuningShapeTrainer(
-            loader=loader,
+        if cfg.log.use_wandb and WANDB_AVAILABLE:
+            wandb.init(
+                project=cfg.wandb.project,
+                entity=cfg.wandb.entity,
+                name=cfg.wandb.name + "_" + str(nef_start_idx) + "-" + str(nef_end_idx),
+                config={"cfg": dict(cfg), "nef_cfg": dict(nef_cfg)},
+            )
+
+        trainer = SignalShapeTrainer(
+            coords=coords,
+            occupancies=occupancies,
+            train_rng=train_rng,
             nef_cfg=nef_cfg,
             scheduler_cfg=cfg.scheduler,
             optimizer_cfg=cfg.optimizer,
-            log_cfg=cfg.log_cfg,
+            log_cfg=cfg.log,
             num_steps=cfg.train.num_steps,
-            masked_portion=cfg.train.masked_portion,
-            init_rng=cur_init_rng,
-            fixed_init=cfg.train.fixed_init,
-            seed=seed,
+            initializer=initializers[find_seed_idx(nef_start_idx, signals_in_dset)],
+            verbose=cfg.train.verbose,
+            num_points=cfg.train.num_points,
         )
 
         trainer.compile()
@@ -116,7 +137,7 @@ def objective(
         logging.info(f"Run done in {end_time - start_time:.2f} s")
         logging.info(f"Time per shape: {1000*time_per_shape:.2f} ms")
 
-        attributes = {"labels": trainer.labels}
+        attributes = {"labels": labels}
 
         trainer.save(
             nefs_folder / Path(path_from_name_idxs("nefs", nef_start_idx, nef_end_idx)),

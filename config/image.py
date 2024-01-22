@@ -14,6 +14,7 @@ def get_config(mode: Literal["fit", "inspect", "tune", "find_init"] = None):
         logging.info(f"No mode provided, using '{mode}' as default")
 
     cfg = ConfigDict()
+    cfg.task = "image"
     cfg.nef_dir = find_env_path("NEF_PATH", "saved_models")
     # Create dir for saving meta-learned initialisations
     cfg.meta_nef_dir = find_env_path("NEF_PATH", "saved_meta_models")

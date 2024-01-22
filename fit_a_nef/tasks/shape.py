@@ -8,9 +8,11 @@ import numpy as np
 import optax
 from absl import logging
 
-from fit_a_nef.initializers import InitModel
-from fit_a_nef.metrics import iou
-from fit_a_nef.trainer import SignalTrainer
+from dataset.shape_dataset.utils import extract_mesh_from_neural_field
+
+from ..initializers import InitModel
+from ..metrics import iou
+from ..trainer import SignalTrainer
 
 try:
     import wandb
@@ -28,7 +30,7 @@ def stack_cut_tensor(
 
     Args:
         tensor_list (Sequence[jnp.ndarray]): The list of tensors to concatenate and pad.
-        repeat (int, optional): Number of times to repeat each tensor. Defaults to 1.
+        repeat_upto (int, optional): Upper limit of times to repeat each tensor. Defaults to 1.
         shuffle (bool, optional): Whether to shuffle the tensors in the repeating step. Defaults to False.
 
     Returns:
@@ -53,6 +55,32 @@ def stack_cut_tensor(
 
 
 class SignalShapeTrainer(SignalTrainer):
+    """Class used to fit nefs on occupancy signals.
+
+    :param coords: The coordinates to train on.
+    :type coords: jnp.ndarray
+    :param occupancies: The occupancy values to train on.
+    :type occupancies: jnp.ndarray
+    :param train_rng: The rng to use for training.
+    :type train_rng: jnp.ndarray
+    :param nef_cfg: The config for the neural network.
+    :type nef_cfg: Dict[str, Any]
+    :param scheduler_cfg: The config for the scheduler.
+    :type scheduler_cfg: Dict[str, Any]
+    :param optimizer_cfg: The config for the optimizer.
+    :type optimizer_cfg: Dict[str, Any]
+    :param log_cfg: The config for the logger.
+    :type log_cfg: Dict[str, Any]
+    :param initializer: The initializer for the model.
+    :type initializer: InitModel
+    :param num_steps: The number of steps to train for.
+    :type num_steps: int
+    :param verbose: Whether to print progress, defaults to False
+    :type verbose: bool, optional
+    :param num_points: The number of points to use for each shape, defaults to (2048, 2048)
+    :type num_points: Tuple[int, int], optional
+    """
+
     def __init__(
         self,
         coords: jnp.ndarray,
@@ -67,29 +95,15 @@ class SignalShapeTrainer(SignalTrainer):
         verbose: bool = False,
         num_points: Tuple[int, int] = (2048, 2048),
     ):
-        """
-        Args:
-            occupancy (jnp.ndarray): The occupancy values to train on.
-            coords (jnp.ndarray): The coordinates to train on.
-            nef_cfg (Dict[str, Any]): The config for the neural network.
-            scheduler_cfg (Dict[str, Any]): The config for the scheduler.
-            out_channels (int, optional): The number of output channels. Defaults to 1.
-            seed (int, optional): The seed to use. Defaults to 42.
-            num_steps (int, optional): The number of steps to train for. Defaults to 20000.
-
-        Raises:
-            NotImplementedError: If the model is not implemented.
-
-        Returns:
-            None
-        """
+        """Constructor method."""
         self.num_points = num_points
         self.log_cfg = log_cfg
+
         num_signals = coords.shape[0]
+        self.max_shapes_logged = min(5, num_signals)
 
         # Preprocess data by splitting into positive and negative points
         # Repeat and shuffle points to get easier iterator over data (especially for positive points)
-        start_time = time.time()
         pin = [coords[i, occupancies[i] >= 0.5] for i in range(occupancies.shape[0])]
         self.points_in = stack_cut_tensor(pin, repeat_upto=100_000, shuffle=True)
 
@@ -204,17 +218,34 @@ class SignalShapeTrainer(SignalTrainer):
                         )
                     logging.info(f"Step: {step_num}. IOU: {mean_iou}")
 
+                if step_num % self.log_cfg.meshes == 0 or (step_num == self.num_steps):
+                    if WANDB_AVAILABLE and self.log_cfg.use_wandb:
+                        for i in range(self.max_shapes_logged):
+                            mesh = extract_mesh_from_neural_field(self.apply_model, shape_idx=i)
+                            export_path = self.log_cfg.shapes_temp_dir / Path(f"mesh-{i}.obj")
+                            mesh.export(export_path)
+                            wandb.log(
+                                {
+                                    f"mesh-{i}": wandb.Object3D(
+                                        str(export_path), parse_model_format="obj"
+                                    ),
+                                },
+                                step=step_num,
+                            )
+                        else:
+                            logging.info("Wandb not available. Skipping logging shapes.")
+
+    def apply_model_all_coords(self):
+        return jax.vmap(
+            fun=lambda params, coords: self.model.apply({"params": params}, coords), in_axes=(0, 0)
+        )(self.state.params, self.coords)
+
     def iou(self):
         # Apply model to all coordinates in the dataset for each shape.
         occ_hats = self.apply_model_all_coords()
 
         metric = iou(self.signals, occ_hats)
         return jnp.mean(metric), jnp.mean(jnp.square(metric))
-
-    def apply_model_all_coords(self):
-        return jax.vmap(
-            fun=lambda params, coords: self.model.apply({"params": params}, coords), in_axes=(0, 0)
-        )(self.state.params, self.coords)
 
     def train_to_target_iou(self, target_iou, check_every):
         num_steps = 0
@@ -229,3 +260,9 @@ class SignalShapeTrainer(SignalTrainer):
             num_steps += 1
 
         return num_steps
+
+    def extract_and_save_meshes(self, save_folder: Path):
+        for i in range(self.num_signals):
+            mesh = extract_mesh_from_neural_field(self.apply_model, shape_idx=i)
+            export_path = save_folder / Path(f"mesh-{i}.obj")
+            mesh.export(export_path)

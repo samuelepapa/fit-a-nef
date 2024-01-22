@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools >= 65", "wheel >= 0.38"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fit_a_nef"
+authors = [
+    {name = "Samuele Papa", email = "samuele.papa@gmail.com"}
+]
+description = "A package to load and transform neural datasets"
+readme = "README.md"
+dependencies = [
+    "jax>=0.4.13",
+    "jaxlib>=0.4.23",
+    "optax>=0.1.5",
+    "flax>=0.7.0",
+    "torchvision>=0.15",
+    "torchaudio>=2.0",
+    "torch>=2.0",
+    "h5py>=3.0.0",
+    "numpy>=1.19.5",
+    "absl-py>=0.12.0",
+    "faiss-cpu>=1.7.0",
+    "scikit-learn>=0.24.1",
+]
+dynamic = ["version"]
+
+[tool.setuptools.packages.find]
+where = ["."]  # list of folders that contain the packages (["."] by default)
+include = ["fit_a_nef*"]  # package names should match these glob patterns (["*"] by default)
+exclude = []  # exclude packages matching these glob patterns (empty by default)
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
+
+[tool.setuptools.dynamic]
+version = {attr = "fit_a_nef.VERSION"}

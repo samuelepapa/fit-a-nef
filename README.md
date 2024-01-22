@@ -154,4 +154,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Acknowledgements and Contributions
 
-We thank [Miltiadis Kofinas](mkofinas.github.io), and David Romero for the feedback during development.
+We thank [Miltiadis Kofinas](https://mkofinas.github.io/), and David Romero for the feedback during development.
